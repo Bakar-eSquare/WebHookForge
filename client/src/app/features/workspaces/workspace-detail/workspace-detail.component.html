@@ -1,0 +1,169 @@
+@if (loading()) {
+  <div class="spinner-overlay"><div class="spinner"></div></div>
+}
+
+@else if (workspace(); as ws) {
+  <div class="page">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <div class="breadcrumb">
+          <a routerLink="/workspaces">Workspaces</a>
+          <span>/</span>
+          <span>{{ ws.name }}</span>
+        </div>
+        <h1 class="page-title">{{ ws.name }}</h1>
+        <p class="page-subtitle">{{ ws.slug }}</p>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary btn-sm" (click)="showMembers.set(!showMembers())">
+          <span class="icon"><svg-icon name="users" [size]="14" /></span>
+          Members ({{ ws.members.length }})
+        </button>
+        <button class="btn btn-primary" (click)="showNewEp.set(true)">
+          <span class="icon"><svg-icon name="plus" [size]="14" [strokeWidth]="2.5" /></span>
+          New endpoint
+        </button>
+      </div>
+    </div>
+
+    <!-- Members panel -->
+    @if (showMembers()) {
+      <div class="card members-panel">
+        <div class="members-header">
+          <h3>Team members</h3>
+          <button class="btn btn-ghost btn-icon btn-sm" (click)="showMembers.set(false)">
+            <span class="icon"><svg-icon name="close" [size]="16" /></span>
+          </button>
+        </div>
+
+        <div class="member-list">
+          @for (m of ws.members; track m.userId) {
+            <div class="member-row">
+              <div class="member-avatar">{{ m.displayName[0].toUpperCase() }}</div>
+              <div class="member-info">
+                <span class="member-name">{{ m.displayName }}</span>
+                <span class="member-email">{{ m.email }}</span>
+              </div>
+              <span class="badge badge-neutral">{{ m.role }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="add-member">
+          @if (memberError()) {
+            <div class="alert alert-error mb-3">{{ memberError() }}</div>
+          }
+          <div class="add-member-form">
+            <input class="form-control" type="email" placeholder="colleague@example.com"
+                   [(ngModel)]="addEmail" (keyup.enter)="addMember()" />
+            <select class="form-control role-select" [(ngModel)]="addRole">
+              <option value="Viewer">Viewer</option>
+              <option value="Editor">Editor</option>
+              <option value="Admin">Admin</option>
+            </select>
+            <button class="btn btn-primary btn-sm" [disabled]="addingMember()" (click)="addMember()">
+              Invite
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Endpoints list -->
+    @if (endpoints().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">🔗</div>
+        <p class="empty-title">No endpoints yet</p>
+        <p class="empty-desc">Create an endpoint to get a unique URL for capturing webhook requests.</p>
+        <button class="btn btn-primary mt-2" (click)="showNewEp.set(true)">Create endpoint</button>
+      </div>
+    }
+
+    @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Webhook URL</th>
+              <th>Requests</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ep of endpoints(); track ep.id) {
+              <tr class="clickable" [routerLink]="['/workspaces', ws.id, 'endpoints', ep.id]">
+                <td>
+                  <span class="ep-name">{{ ep.name }}</span>
+                  @if (ep.description) {
+                    <span class="ep-desc">{{ ep.description }}</span>
+                  }
+                </td>
+                <td>
+                  <div class="url-cell">
+                    <code class="ep-url">{{ ep.webhookUrl }}</code>
+                    <button class="copy-btn" (click)="copyUrl(ep.webhookUrl, $event)" title="Copy URL">
+                      <span class="icon"><svg-icon name="copy" [size]="13" /></span>
+                    </button>
+                  </div>
+                </td>
+                <td><span class="badge badge-neutral">{{ ep.requestCount }}</span></td>
+                <td>
+                  <span class="badge" [class.badge-success]="ep.isActive" [class.badge-neutral]="!ep.isActive">
+                    {{ ep.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="text-muted text-sm">{{ ep.createdAt | date: 'dd MMM yyyy' }}</td>
+                <td>
+                  <button class="btn btn-ghost btn-icon btn-sm text-error" title="Delete" (click)="deleteEndpoint(ep, $event)">
+                    <span class="icon"><svg-icon name="trashLines" [size]="14" /></span>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+  </div>
+}
+
+<!-- New Endpoint Modal -->
+@if (showNewEp()) {
+  <div class="modal-backdrop" (click)="showNewEp.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>New Endpoint</h3>
+        <button class="btn btn-ghost btn-icon btn-sm" (click)="showNewEp.set(false)">
+          <span class="icon"><svg-icon name="close" [size]="16" /></span>
+        </button>
+      </div>
+      <div class="modal-body--form">
+        @if (createError()) {
+          <div class="alert alert-error">{{ createError() }}</div>
+        }
+        <div class="form-group">
+          <label for="epName">Name</label>
+          <input id="epName" class="form-control" type="text" placeholder="Stripe webhooks"
+                 [(ngModel)]="newEpName" autofocus />
+        </div>
+        <div class="form-group">
+          <label for="epDesc">Description <span class="text-muted">(optional)</span></label>
+          <input id="epDesc" class="form-control" type="text" placeholder="Receives payment events from Stripe"
+                 [(ngModel)]="newEpDesc" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showNewEp.set(false)">Cancel</button>
+        <button class="btn btn-primary" (click)="createEndpoint()" [disabled]="creating() || !newEpName.trim()">
+          @if (creating()) { <span class="btn-spinner"></span> } Create endpoint
+        </button>
+      </div>
+    </div>
+  </div>
+}

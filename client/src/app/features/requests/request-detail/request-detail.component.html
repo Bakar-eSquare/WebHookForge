@@ -1,0 +1,56 @@
+@if (loading()) { <div class="spinner-overlay"><div class="spinner"></div></div> }
+
+@else if (request(); as req) {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <a class="back-link" [routerLink]="['/workspaces']">← Back</a>
+        <div class="req-title-row">
+          <span class="badge" [ngClass]="req.method | httpMethod">{{ req.method }}</span>
+          <h1 class="req-title-path">{{ req.path || '/' }}</h1>
+        </div>
+        <p class="page-subtitle">{{ req.receivedAt | date: 'EEEE, dd MMMM yyyy HH:mm:ss' }}</p>
+      </div>
+    </div>
+
+    <div class="req-meta-pills">
+      @if (req.ipAddress)   { <span class="meta-pill">{{ req.ipAddress }}</span> }
+      @if (req.contentType) { <span class="meta-pill">{{ req.contentType }}</span> }
+      <span class="meta-pill">{{ req.sizeBytes | fileSize }}</span>
+    </div>
+
+    @if (req.queryString) {
+      <div class="card req-section">
+        <div class="section-title">Query string</div>
+        <pre class="req-code">{{ req.queryString }}</pre>
+      </div>
+    }
+
+    @if (req.headers) {
+      <div class="card req-section">
+        <div class="section-title">Headers</div>
+        <div class="headers-table">
+          @for (entry of req.headers | objectEntries; track entry[0]) {
+            <div class="header-row">
+              <span class="header-key">{{ entry[0] }}</span>
+              <span class="header-val">{{ entry[1] }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (req.body) {
+      <div class="card req-section">
+        <div class="section-title">
+          Body
+          <button class="copy-btn ml-auto" (click)="copy(req.body!)">
+            <span class="icon"><svg-icon name="copy" [size]="12" /></span>
+            Copy
+          </button>
+        </div>
+        <pre class="req-code">{{ req.body | prettyJson }}</pre>
+      </div>
+    }
+  </div>
+}

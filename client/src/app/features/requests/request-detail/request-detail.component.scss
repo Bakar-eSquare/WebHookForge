@@ -1,0 +1,44 @@
+.back-link {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  &:hover { color: var(--text-secondary); }
+}
+
+.req-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.req-title-path {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.req-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1rem 1.25rem;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+}
+
+.req-code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  overflow-x: auto;
+  max-height: 26.25rem;
+}

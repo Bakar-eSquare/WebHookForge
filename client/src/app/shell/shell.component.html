@@ -1,0 +1,85 @@
+<div class="app-layout">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <!-- Brand -->
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <span class="icon"><svg-icon name="bolt" [size]="20" /></span>
+      </div>
+      <span class="brand-name">WebhookForge</span>
+    </div>
+
+    <!-- Workspace Switcher -->
+    <div class="workspace-switcher" [class.open]="menuOpen()">
+      <button class="ws-trigger" (click)="menuOpen.set(!menuOpen())">
+        <span class="ws-avatar">{{ (activeWs()?.name ?? 'W')[0].toUpperCase() }}</span>
+        <div class="ws-info">
+          <span class="ws-name truncate">{{ activeWs()?.name ?? 'Select workspace' }}</span>
+          <span class="ws-slug truncate">{{ activeWs()?.slug ?? '' }}</span>
+        </div>
+        <span class="icon ws-chevron" [class.rotated]="menuOpen()"><svg-icon name="chevronDown" [size]="14" /></span>
+      </button>
+
+      @if (menuOpen()) {
+        <div class="ws-dropdown">
+          @for (ws of workspaces(); track ws.id) {
+            <button class="ws-option" [class.active]="ws.id === activeWs()?.id" (click)="selectWorkspace(ws)">
+              <span class="ws-avatar sm">{{ ws.name[0].toUpperCase() }}</span>
+              <span class="truncate">{{ ws.name }}</span>
+              @if (ws.id === activeWs()?.id) {
+                <span class="icon ws-check-icon"><svg-icon name="check" [size]="14" [strokeWidth]="2.5" /></span>
+              }
+            </button>
+          }
+          <div class="ws-dropdown-sep"></div>
+          <button class="ws-option" routerLink="/workspaces" (click)="menuOpen.set(false)">
+            <span class="icon"><svg-icon name="plus" [size]="14" /></span>
+            <span>New workspace</span>
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">Navigation</p>
+
+      <a class="nav-item" routerLink="/workspaces" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+        <span class="icon"><svg-icon name="grid" [size]="16" /></span>
+        <span>Workspaces</span>
+      </a>
+
+      @if (activeWs(); as ws) {
+        <a class="nav-item" [routerLink]="['/workspaces', ws.id]" routerLinkActive="active">
+          <span class="icon"><svg-icon name="globe" [size]="16" /></span>
+          <span>Endpoints</span>
+        </a>
+      }
+    </nav>
+
+    <!-- User / Logout -->
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">{{ (user()?.displayName ?? 'U')[0].toUpperCase() }}</div>
+        <div class="user-meta">
+          <span class="user-name truncate">{{ user()?.displayName }}</span>
+          <span class="user-email truncate">{{ user()?.email }}</span>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-icon btn-sm" title="Logout" (click)="logout()">
+        <span class="icon"><svg-icon name="logOut" [size]="15" /></span>
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ── Main content ──────────────────────────────────────────────────────── -->
+  <main class="main-content">
+    <div class="content-scroll">
+      <router-outlet />
+    </div>
+  </main>
+
+</div>

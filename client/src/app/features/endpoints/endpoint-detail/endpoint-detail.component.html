@@ -1,0 +1,377 @@
+@if (!endpoint()) {
+  <div class="spinner-overlay"><div class="spinner"></div></div>
+}
+
+@else if (endpoint(); as ep) {
+<div class="ep-page">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div class="ep-header">
+    <div>
+      <div class="breadcrumb">
+        <a [routerLink]="['/workspaces', wsId]">{{ ep.name }}</a>
+        <span>/</span>
+        <span>Endpoint</span>
+      </div>
+      <div class="ep-title-row">
+        <h1 class="page-title">{{ ep.name }}</h1>
+        <span class="badge" [class.badge-success]="ep.isActive" [class.badge-neutral]="!ep.isActive">
+          {{ ep.isActive ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+      @if (ep.description) {
+        <p class="page-subtitle">{{ ep.description }}</p>
+      }
+    </div>
+
+    <div class="ep-url-row">
+      <code class="ep-webhook-url">{{ ep.webhookUrl }}</code>
+      <button class="btn btn-secondary btn-sm" (click)="copyUrl()">
+        <span class="icon"><svg-icon name="copy" [size]="13" /></span>
+        Copy URL
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Tabs ────────────────────────────────────────────────────────────── -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab() === 'requests'" (click)="activeTab.set('requests')">
+      Requests
+      @if (requests().length > 0) {
+        <span class="tab-count">{{ paging()?.totalCount ?? requests().length }}</span>
+      }
+    </button>
+    <button class="tab" [class.active]="activeTab() === 'rules'" (click)="activeTab.set('rules')">
+      Mock Rules
+      @if (rules().length > 0) {
+        <span class="tab-count">{{ rules().length }}</span>
+      }
+    </button>
+    <button class="tab" [class.active]="activeTab() === 'settings'" (click)="activeTab.set('settings')">
+      Settings
+    </button>
+  </div>
+
+  <!-- ── Requests Tab ─────────────────────────────────────────────────────── -->
+  @if (activeTab() === 'requests') {
+    <div class="requests-pane">
+
+      <!-- Left: request list -->
+      <div class="req-list-col">
+        <div class="req-list-header">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-secondary font-medium">Requests</span>
+            <span class="live-badge" [class.live-badge--on]="liveMode()">
+              <span class="live-dot"></span> Live
+            </span>
+          </div>
+          <button class="btn btn-ghost btn-sm" (click)="purgeRequests()" title="Purge old requests">
+            <span class="icon"><svg-icon name="purge" [size]="13" /></span>
+          </button>
+        </div>
+
+        @if (loading()) {
+          <div class="spinner-overlay"><div class="spinner spinner--sm"></div></div>
+        }
+
+        @else if (requests().length === 0) {
+          <div class="empty-state req-list-empty">
+            <div class="empty-icon">📡</div>
+            <p class="empty-title">Waiting for requests…</p>
+            <p class="empty-desc">Send a POST to your webhook URL to see it appear here in real time.</p>
+          </div>
+        }
+
+        @else {
+          <div class="req-list">
+            @for (req of requests(); track req.id) {
+              <div class="req-item" [class.active]="selectedReq()?.id === req.id" (click)="selectRequest(req)">
+                <span class="badge" [ngClass]="req.method | httpMethod">{{ req.method }}</span>
+                <div class="req-item-meta">
+                  <span class="req-path truncate">{{ req.path || '/' }}</span>
+                  <span class="req-time">{{ req.receivedAt | date: 'HH:mm:ss' }}</span>
+                </div>
+                <span class="req-size">{{ req.sizeBytes | fileSize }}</span>
+              </div>
+            }
+          </div>
+
+          @if (paging(); as p) {
+            @if (p.totalPages > 1) {
+              <div class="pagination">
+                <button class="btn btn-ghost btn-sm" [disabled]="!p.hasPreviousPage" (click)="loadRequests(p.page - 1)">
+                  ← Prev
+                </button>
+                <span class="text-muted text-sm">{{ p.page }} / {{ p.totalPages }}</span>
+                <button class="btn btn-ghost btn-sm" [disabled]="!p.hasNextPage" (click)="loadRequests(p.page + 1)">
+                  Next →
+                </button>
+              </div>
+            }
+          }
+        }
+      </div>
+
+      <!-- Right: request detail -->
+      <div class="req-detail-col">
+        @if (selectedReq(); as req) {
+          <div class="req-detail">
+            <div class="req-detail-header">
+              <span class="badge" [ngClass]="req.method | httpMethod">{{ req.method }}</span>
+              <span class="req-detail-path">{{ req.path || '/' }}</span>
+              <span class="text-muted text-xs ml-auto">
+                {{ req.receivedAt | date: 'dd MMM yyyy HH:mm:ss' }}
+              </span>
+            </div>
+
+            <div class="req-meta-pills">
+              @if (req.ipAddress) {
+                <span class="meta-pill">
+                  <span class="icon"><svg-icon name="circle" [size]="11" /></span>
+                  {{ req.ipAddress }}
+                </span>
+              }
+              @if (req.contentType) {
+                <span class="meta-pill">{{ req.contentType }}</span>
+              }
+              <span class="meta-pill">{{ req.sizeBytes | fileSize }}</span>
+            </div>
+
+            @if (req.queryString) {
+              <div class="req-section">
+                <div class="req-section-title">Query string</div>
+                <pre class="req-code">{{ req.queryString }}</pre>
+              </div>
+            }
+
+            @if (req.headers) {
+              <div class="req-section">
+                <div class="req-section-title">Headers</div>
+                <div class="headers-table">
+                  @for (entry of req.headers | objectEntries; track entry[0]) {
+                    <div class="header-row">
+                      <span class="header-key">{{ entry[0] }}</span>
+                      <span class="header-val truncate">{{ entry[1] }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (req.body) {
+              <div class="req-section">
+                <div class="req-section-title">
+                  Body
+                  <button class="copy-btn ml-auto" (click)="copyText(req.body!)">
+                    <span class="icon"><svg-icon name="copy" [size]="12" /></span>
+                    Copy
+                  </button>
+                </div>
+                <pre class="req-code">{{ req.body | prettyJson }}</pre>
+              </div>
+            }
+          </div>
+        }
+
+        @else {
+          <div class="empty-state req-detail-empty">
+            <div class="empty-icon">←</div>
+            <p class="empty-title">Select a request</p>
+            <p class="empty-desc">Click any request on the left to inspect its headers and body.</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── Mock Rules Tab ───────────────────────────────────────────────────── -->
+  @if (activeTab() === 'rules') {
+    <div class="rules-pane">
+      <div class="rules-header">
+        <p class="text-secondary text-sm">Rules are evaluated top-down by priority. The first match wins.</p>
+        <button class="btn btn-primary" (click)="openCreateRule()">
+          <span class="icon"><svg-icon name="plus" [size]="14" [strokeWidth]="2.5" /></span>
+          Add rule
+        </button>
+      </div>
+
+      @if (rules().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">⚙️</div>
+          <p class="empty-title">No mock rules</p>
+          <p class="empty-desc">Add a rule to automatically respond to incoming requests matching your criteria.</p>
+          <button class="btn btn-primary mt-2" (click)="openCreateRule()">Add rule</button>
+        </div>
+      }
+
+      @else {
+        <div class="rules-list">
+          @for (rule of rules(); track rule.id) {
+            <div class="rule-card" [class.rule-inactive]="!rule.isActive">
+              <div class="rule-priority">{{ rule.priority }}</div>
+              <div class="rule-body">
+                <div class="rule-name-row">
+                  <span class="rule-name">{{ rule.name }}</span>
+                  <div class="rule-tags">
+                    @if (rule.matchMethod) {
+                      <span class="badge" [ngClass]="rule.matchMethod | httpMethod">{{ rule.matchMethod }}</span>
+                    }
+                    <span class="badge badge-neutral">{{ rule.responseStatus }}</span>
+                    @if (rule.delayMs > 0) {
+                      <span class="badge badge-warning">+{{ rule.delayMs }}ms</span>
+                    }
+                  </div>
+                </div>
+                @if (rule.matchPath) {
+                  <span class="rule-path text-muted text-xs">{{ rule.matchPath }}</span>
+                }
+              </div>
+              <div class="rule-actions">
+                <button class="btn btn-ghost btn-icon btn-sm"
+                        [class.text-success]="rule.isActive"
+                        [class.text-muted]="!rule.isActive"
+                        title="{{ rule.isActive ? 'Disable' : 'Enable' }}"
+                        (click)="toggleRule(rule, $event)">
+                  <span class="icon"><svg-icon name="power" [size]="14" /></span>
+                </button>
+                <button class="btn btn-ghost btn-icon btn-sm" title="Edit" (click)="openEditRule(rule, $event)">
+                  <span class="icon"><svg-icon name="edit" [size]="14" /></span>
+                </button>
+                <button class="btn btn-ghost btn-icon btn-sm text-error" title="Delete" (click)="deleteRule(rule, $event)">
+                  <span class="icon"><svg-icon name="trash" [size]="14" /></span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ── Settings Tab ─────────────────────────────────────────────────────── -->
+  @if (activeTab() === 'settings') {
+    <div class="settings-pane">
+      <div class="card settings-card">
+        <h3 class="settings-heading">Endpoint settings</h3>
+
+        <div class="form-group">
+          <label for="epNameInput">Name</label>
+          <input id="epNameInput" class="form-control" [(ngModel)]="epName" />
+        </div>
+
+        <div class="form-group">
+          <label for="epDescInput">Description</label>
+          <input id="epDescInput" class="form-control" placeholder="Optional description"
+                 [(ngModel)]="epDesc" />
+        </div>
+
+        <div class="toggle-row">
+          <div>
+            <p class="active-label">Active</p>
+            <p class="text-muted text-sm mt-1">When inactive, incoming requests are rejected with 404.</p>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" [(ngModel)]="epActive" />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+
+        <div class="flex gap-2">
+          <button class="btn btn-primary" [disabled]="savingEp()" (click)="saveSettings()">
+            @if (savingEp()) { <span class="btn-spinner"></span> } Save changes
+          </button>
+          <button class="btn btn-secondary" (click)="regenerateToken()">
+            <span class="icon"><svg-icon name="refresh" [size]="13" /></span>
+            Regenerate token
+          </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="danger-zone">
+          <p class="danger-label">Token</p>
+          <p class="text-muted text-sm mt-1">
+            Current token: <code class="font-mono text-sm text-secondary">{{ ep.token }}</code>
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
+}
+
+<!-- ── Rule Form Modal ───────────────────────────────────────────────────── -->
+@if (showRuleForm()) {
+  <div class="modal-backdrop" (click)="showRuleForm.set(false)">
+    <div class="modal modal--wide" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ editingRule() ? 'Edit Rule' : 'New Mock Rule' }}</h3>
+        <button class="btn btn-ghost btn-icon btn-sm" (click)="showRuleForm.set(false)">
+          <span class="icon"><svg-icon name="close" [size]="16" /></span>
+        </button>
+      </div>
+
+      <div class="modal-body--form">
+        @if (ruleError()) {
+          <div class="alert alert-error">{{ ruleError() }}</div>
+        }
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Rule name</label>
+            <input class="form-control" placeholder="Return 200 OK" [(ngModel)]="ruleFormData.name" />
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <input class="form-control" type="number" min="1" [(ngModel)]="ruleFormData.priority" />
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Match method <span class="text-muted">(blank = any)</span></label>
+            <select class="form-control" [(ngModel)]="ruleFormData.matchMethod">
+              <option value="">Any</option>
+              <option>GET</option><option>POST</option><option>PUT</option>
+              <option>PATCH</option><option>DELETE</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Match path <span class="text-muted">(supports *)</span></label>
+            <input class="form-control" placeholder="/webhooks/orders/*" [(ngModel)]="ruleFormData.matchPath" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Match body expression <span class="text-muted">(JSONPath / regex)</span></label>
+          <input class="form-control" placeholder='$.event == "payment.success"' [(ngModel)]="ruleFormData.matchBodyExpression" />
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Response status</label>
+            <input class="form-control" type="number" min="100" max="599" [(ngModel)]="ruleFormData.responseStatus" />
+          </div>
+          <div class="form-group">
+            <label>Delay (ms)</label>
+            <input class="form-control" type="number" min="0" [(ngModel)]="ruleFormData.delayMs" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Response body <span class="text-muted">(JSON)</span></label>
+          <textarea class="form-control" rows="4" placeholder='{"ok": true}' [(ngModel)]="ruleFormData.responseBody"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showRuleForm.set(false)">Cancel</button>
+        <button class="btn btn-primary" [disabled]="savingRule()" (click)="saveRule()">
+          @if (savingRule()) { <span class="btn-spinner"></span> }
+          {{ editingRule() ? 'Save changes' : 'Create rule' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

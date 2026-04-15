@@ -1,0 +1,60 @@
+<div class="auth-page">
+  <div class="auth-card">
+
+    <div class="auth-brand">
+      <div class="brand-icon">
+        <span class="icon"><svg-icon name="bolt" [size]="22" /></span>
+      </div>
+      <span>WebhookForge</span>
+    </div>
+
+    <h1 class="auth-title">Create your account</h1>
+    <p class="auth-subtitle">Start capturing and mocking webhooks in seconds</p>
+
+    @if (error()) {
+      <div class="alert alert-error mb-3">
+        <span class="icon"><svg-icon name="alertCircle" [size]="14" /></span>
+        {{ error() }}
+      </div>
+    }
+
+    <form (ngSubmit)="submit()" #f="ngForm" class="auth-form">
+      <div class="form-group">
+        <label for="displayName">Display name</label>
+        <input id="displayName" class="form-control" type="text" placeholder="Jane Doe"
+               [(ngModel)]="displayName" name="displayName" required autocomplete="name" />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" class="form-control" type="email" placeholder="you@example.com"
+               [(ngModel)]="email" name="email" required autocomplete="email" />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" class="form-control" type="password" placeholder="Min. 8 characters"
+               [(ngModel)]="password" name="password" required minlength="8" autocomplete="new-password" />
+      </div>
+
+      <div class="form-group">
+        <label for="confirm">Confirm password</label>
+        <input id="confirm" class="form-control" type="password" placeholder="Repeat password"
+               [(ngModel)]="confirm" name="confirm" required autocomplete="new-password" />
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full" [disabled]="loading() || f.invalid">
+        @if (loading()) {
+          <span class="btn-spinner"></span> Creating account…
+        } @else {
+          Create account
+        }
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      Already have an account? <a routerLink="/login">Sign in</a>
+    </p>
+
+  </div>
+</div>
