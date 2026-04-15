@@ -23,8 +23,8 @@
     <div class="ep-url-row">
       <code class="ep-webhook-url">{{ ep.webhookUrl }}</code>
       <button class="btn btn-secondary btn-sm" (click)="copyUrl()">
-        <span class="icon"><svg-icon name="copy" [size]="13" /></span>
-        Copy URL
+        <span class="icon"><svg-icon [name]="urlCopied() ? 'check' : 'copy'" [size]="13" /></span>
+        {{ urlCopied() ? 'Copied!' : 'Copy URL' }}
       </button>
     </div>
   </div>
@@ -159,8 +159,8 @@
                 <div class="req-section-title">
                   Body
                   <button class="copy-btn ml-auto" (click)="copyText(req.body!)">
-                    <span class="icon"><svg-icon name="copy" [size]="12" /></span>
-                    Copy
+                    <span class="icon"><svg-icon [name]="bodyCopied() ? 'check' : 'copy'" [size]="12" /></span>
+                    {{ bodyCopied() ? 'Copied!' : 'Copy' }}
                   </button>
                 </div>
                 <pre class="req-code">{{ req.body | prettyJson }}</pre>

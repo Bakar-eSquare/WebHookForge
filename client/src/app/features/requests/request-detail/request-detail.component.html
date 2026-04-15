@@ -43,8 +43,8 @@
         <div class="section-title">
           Body
           <button class="copy-btn ml-auto" (click)="copy(req.body!)">
-            <span class="icon"><svg-icon name="copy" [size]="12" /></span>
-            Copy
+            <span class="icon"><svg-icon [name]="copied() ? 'check' : 'copy'" [size]="12" /></span>
+            {{ copied() ? 'Copied!' : 'Copy' }}
           </button>
         </div>
         <pre class="req-code">{{ req.body | prettyJson }}</pre>

@@ -23,6 +23,7 @@ export class RequestDetailComponent implements OnInit {
 
   request = signal<IncomingRequest | null>(null);
   loading = signal(true);
+  copied  = signal(false);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -32,5 +33,9 @@ export class RequestDetailComponent implements OnInit {
     });
   }
 
-  copy(text: string): void { navigator.clipboard.writeText(text); }
+  copy(text: string): void {
+    navigator.clipboard.writeText(text);
+    this.copied.set(true);
+    setTimeout(() => this.copied.set(false), 1500);
+  }
 }

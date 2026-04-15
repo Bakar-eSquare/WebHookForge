@@ -49,6 +49,10 @@ export class EndpointDetailComponent implements OnInit, OnDestroy {
   savingRule   = signal(false);
   ruleError    = signal('');
 
+  // Copy feedback
+  urlCopied  = signal(false);
+  bodyCopied = signal(false);
+
   // Settings form
   epName   = '';
   epDesc   = '';
@@ -121,7 +125,10 @@ export class EndpointDetailComponent implements OnInit, OnDestroy {
 
   copyUrl(): void {
     const url = this.endpoint()?.webhookUrl;
-    if (url) navigator.clipboard.writeText(url);
+    if (!url) return;
+    navigator.clipboard.writeText(url);
+    this.urlCopied.set(true);
+    setTimeout(() => this.urlCopied.set(false), 1500);
   }
 
   regenerateToken(): void {
@@ -195,7 +202,11 @@ export class EndpointDetailComponent implements OnInit, OnDestroy {
     return { name: '', priority: 1, responseStatus: 200, delayMs: 0 };
   }
 
-  copyText(text: string): void { navigator.clipboard.writeText(text); }
+  copyText(text: string): void {
+    navigator.clipboard.writeText(text);
+    this.bodyCopied.set(true);
+    setTimeout(() => this.bodyCopied.set(false), 1500);
+  }
 
   trackById(index: number, item: { id: string }) { return item.id; }
 }

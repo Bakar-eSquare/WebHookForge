@@ -28,6 +28,7 @@ export class WorkspaceDetailComponent implements OnInit {
   workspace    = signal<Workspace | null>(null);
   endpoints    = signal<Endpoint[]>([]);
   loading      = signal(true);
+  copiedUrl    = signal<string | null>(null);
 
   showNewEp    = signal(false);
   creating     = signal(false);
@@ -110,6 +111,8 @@ export class WorkspaceDetailComponent implements OnInit {
     ev.stopPropagation();
     ev.preventDefault();
     navigator.clipboard.writeText(url);
+    this.copiedUrl.set(url);
+    setTimeout(() => this.copiedUrl.set(null), 1500);
   }
 
   get ownerId() { return this.auth.currentUser()?.id; }

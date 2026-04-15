@@ -102,8 +102,8 @@
                 <td>
                   <div class="url-cell">
                     <code class="ep-url">{{ ep.webhookUrl }}</code>
-                    <button class="copy-btn" (click)="copyUrl(ep.webhookUrl, $event)" title="Copy URL">
-                      <span class="icon"><svg-icon name="copy" [size]="13" /></span>
+                    <button class="copy-btn" (click)="copyUrl(ep.webhookUrl, $event)" [title]="copiedUrl() === ep.webhookUrl ? 'Copied!' : 'Copy URL'">
+                      <span class="icon"><svg-icon [name]="copiedUrl() === ep.webhookUrl ? 'check' : 'copy'" [size]="13" /></span>
                     </button>
                   </div>
                 </td>
